@@ -17,7 +17,7 @@ def arReader():
         corners, ids, rejectedImgPoints = aruco.detectMarkers(frame, dictionary) #マーカを検出
         print(corners,ids)
         aruco.drawDetectedMarkers(frame, corners, ids, (0,255,0)) #検出したマーカに描画する
- 
+
         cv2.imwrite(f'result{cnt}.png',frame)
         cnt+=1
  
