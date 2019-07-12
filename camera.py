@@ -5,7 +5,7 @@ import sys
  
 aruco = cv2.aruco #arucoライブラリ
 dictionary = aruco.getPredefinedDictionary(aruco.DICT_4X4_50)
- 
+
 def arReader(): 
     print(cv2.getBuildInformation()) #詳細の確認
     cap = cv2.VideoCapture(0) #ビデオキャプチャの開始
@@ -21,9 +21,9 @@ def arReader():
 
         cv2.imwrite(f'result{cnt}.png',frame)
         cnt+=1
- 
+
     cap.release() #ビデオキャプチャのメモリ解放
     cv2.destroyAllWindows() #すべてのウィンドウを閉じる
- 
+
 if __name__ == '__main__':
     arReader()
