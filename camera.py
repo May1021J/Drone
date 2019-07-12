@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 #画像を取得してマーカを検出、描画する
 #python3 camera.py Reader
 
