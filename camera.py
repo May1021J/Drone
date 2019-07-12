@@ -1,4 +1,5 @@
 #画像を取得してマーカを検出、描画する
+#python3 camera.py Reader
 
 import cv2 
 import sys
@@ -8,7 +9,7 @@ dictionary = aruco.getPredefinedDictionary(aruco.DICT_4X4_50)
  
 def arReader(): 
     print(cv2.getBuildInformation()) #詳細の確認
-    cap = cv2.VideoCapture(-1) #ビデオキャプチャの開始
+    cap = cv2.VideoCapture(0) #ビデオキャプチャの開始
  
     while True:
  
@@ -26,7 +27,7 @@ def arReader():
  
         aruco.drawDetectedMarkers(imghalf, corners, ids, (0,255,0)) #検出したマーカに描画する
  
-        cv2.imshow('drawDetectedMarkers', imghalf) #マーカが描画された画像を表示
+        cv2.imsave('drawDetectedMarkers', imghalf) #マーカが描画された画像を表示
  
         cv2.waitKey(1) #キーボード入力の受付
  
