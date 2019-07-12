@@ -18,7 +18,7 @@ def arReader():
         print(corners,ids)
         aruco.drawDetectedMarkers(frame, corners, ids, (0,255,0)) #検出したマーカに描画する
  
-        cv2.imwrite(f'img/d{cnt}.png', frame) #マーカが描画された画像を表示
+        cv2.imwrite(f'result{cnt}.png',frame) #マーカが描画された画像
         cnt+=1
  
     cap.release() #ビデオキャプチャのメモリ解放
