@@ -12,13 +12,14 @@ def arReader():
     while True:
  
         ret, frame = cap.read() #ビデオキャプチャから画像を取得
-        print(ret,frame)
+        if frame is None: break
  
         corners, ids, rejectedImgPoints = aruco.detectMarkers(frame, dictionary) #マーカを検出
- 
+        print(corners,ids)
         aruco.drawDetectedMarkers(frame, corners, ids, (0,255,0)) #検出したマーカに描画する
  
-        cv2.imwrite('drawDetectedMarkers', frame) #マーカが描画された画像を表示
+        cv2.imwrite(f'img/d{cnt}.png', frame) #マーカが描画された画像を表示
+        cnt+=1
  
     cap.release() #ビデオキャプチャのメモリ解放
     cv2.destroyAllWindows() #すべてのウィンドウを閉じる
