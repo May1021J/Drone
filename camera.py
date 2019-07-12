@@ -9,7 +9,8 @@ dictionary = aruco.getPredefinedDictionary(aruco.DICT_4X4_50)
 def arReader(): 
     print(cv2.getBuildInformation()) #詳細の確認
     cap = cv2.VideoCapture(0) #ビデオキャプチャの開始
- 
+    cnt=0
+
     while True:
  
         ret, frame = cap.read() #ビデオキャプチャから画像を取得
