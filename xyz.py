@@ -2,7 +2,7 @@
 import cv2
 import numpy as np
 import sys
-from pyardrone import ARDrone
+#from pyardrone import ARDrone
 import logging
 
 aruco = cv2.aruco
