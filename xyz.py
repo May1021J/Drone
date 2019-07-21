@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*
+#Webカメラから検出・座標
 import cv2
 import numpy as np
 import sys
@@ -47,9 +48,9 @@ def main():
         rvecs, tvecs, _objPoints = aruco.estimatePoseSingleMarkers(corners, 0.05, cameraMatrix, distCoeffs)
         if ids is not None:
             for i in range( ids.size ):
-                #print( 'rvec {}, tvec {}'.format( rvecs[i], tvecs[i] ))
-                #print( 'rvecs[{}] {}'.format( i, rvecs[i] ))
-                #print( 'tvecs[{}] {}'.format( i, tvecs[i] ))
+                print( 'rvec {}, tvec {}'.format( rvecs[i], tvecs[i] ))
+                print( 'rvecs[{}] {}'.format( i, rvecs[i] ))
+                print( 'tvecs[{}] {}'.format( i, tvecs[i] ))
                 aruco.drawAxis(frame, cameraMatrix, distCoeffs, rvecs[i], tvecs[i], 0.1)
 
         cv2.imwrite('xyz'+str(cnt)+'.png',frame)
