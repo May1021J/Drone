@@ -3,13 +3,13 @@
 import cv2
 import numpy as np
 import sys
-#from pyardrone import ARDrone
 import logging
 
 aruco = cv2.aruco
 
 # WEBカメラ
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(-1)
+#print(cv2.getBuildInformation())
 
 dictionary = aruco.getPredefinedDictionary(aruco.DICT_4X4_50)
 parameters =  aruco.DetectorParameters_create()
