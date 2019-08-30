@@ -22,10 +22,10 @@ parameters =  aruco.DetectorParameters_create()
 parameters.cornerRefinementMethod = aruco.CORNER_REFINE_CONTOUR
 
 #カメラのキャリブレーション
-cameraMatrix = np.array( [[9.31357583e+03 0.00000000e+00 1.61931898e+03],
-    [0.00000000e+00 9.64867367e+03 1.92100899e+03],
-    [0.00000000e+00 0.00000000e+00 1.00000000e+00]] )
-distCoeffs = np.array( [[ 0.22229833 -6.34741982  0.01145082  0.01934784 -8.43093571]] )
+cameraMatrix = np.array( [[9.31357583e+03, 0.00000000e+00, 1.61931898e+03],
+    [0.00000000e+00, 9.64867367e+03, 1.92100899e+03],
+    [0.00000000e+00, 0.00000000e+00, 1.00000000e+00]] )
+distCoeffs = np.array( [[ 0.22229833, -6.34741982,  0.01145082,  0.01934784, -8.43093571]] )
 
 #カメラの属性情報
 #cap.set(cv2.CAP_PROP_FPS, 10)
@@ -55,11 +55,11 @@ def main():
             if ids is not None:
                 for i in range( ids.size ):
                     #print( 'rvec {}, tvec {}'.format( rvecs[i], tvecs[i] ))
-                    #print( 'rvecs[{}] {}'.format( i, rvecs[i] ))
-                    #print( 'tvecs[{}] {}'.format( i, tvecs[i] ))
+                    print( 'rvecs[{}] {}'.format( i, rvecs[i] ))
+                    print( 'tvecs[{}] {}'.format( i, tvecs[i] ))
                     aruco.drawAxis(client.frame, cameraMatrix, distCoeffs, rvecs[i], tvecs[i], 0.1) #姿勢推定から座標系軸を描画
 
-            cv2.imwrite('drone_xyz'+str(cnt)+'.png',client.frame)
+            cv2.imwrite('drone_xyz2_'+str(cnt)+'.png',client.frame)
             cnt+=1
 
             # Escキーで終了
