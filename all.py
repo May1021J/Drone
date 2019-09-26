@@ -1,92 +1,132 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python
+# -*- coding: utf-8 -*
+#検出・計算・動作の一連の流れ
+
 import cv2
-import cv2.aruco as aruco
-import sys
 import numpy as np
-from math import *
+import sys
+from pyardrone import ARDrone
+import logging
 
-arucoMarkerLength = 0.05
+logging.basicConfig(level=logging.DEBUG)
 
-class AR():
+aruco = cv2.aruco #arucoライブラリ
+dictionary = aruco.getPredefinedDictionary(aruco.DICT_4X4_50)
 
-    def __init__(self, videoPort, cameraMatrix, distortionCoefficients):
-        self.cap = cv2.VideoCapture(videoPort)
-        self.cameraMatrix = np.load(cameraMatrix)
-        self.distortionCoefficients = np.load(distortionCoefficients)
-        self.dictionary = aruco.getPredefinedDictionary(aruco.DICT_4X4_50)
+# ドローンカメラ
+client = ARDrone()
+client.video_ready.wait()
 
-    def findARMarker(self):
-        self.ret, self.frame = self.cap.read()
-        if len(self.frame.shape) == 3:
-            self.Height, self.Width, self.channels = self.frame.shape[:3]
-        else:
-            self.Height, self.Width = self.frame.shape[:2]
-            self.channels = 1
-        self.halfHeight = int(self.Height / 2)
-        self.halfWidth = int(self.Width / 2)
-        self.corners, self.ids, self.rejectedImgPoints = aruco.detectMarkers(self.frame, self.dictionary)
-        #corners[id0,1,2...][][corner0,1,2,3][x,y]
-        aruco.drawDetectedMarkers(self.frame, self.corners, self.ids, (0,255,0))
+parameters =  aruco.DetectorParameters_create()
+# CORNER_REFINE_NONE, no refinement. CORNER_REFINE_SUBPIX, do subpixel refinement. CORNER_REFINE_CONTOUR use contour-Points
+parameters.cornerRefinementMethod = aruco.CORNER_REFINE_CONTOUR
 
-    def show(self):
-        cv2.imshow("result", self.frame)
+####################################################################
 
-    def getARPointAverage(self):
-        num = self.getExistMarker()
-        if num < 1:
-            return
-        else:
-            square_points = np.reshape(np.array(self.corners), (4*num, -1))
-            G = np.mean(square_points, axis = 0)
-            cv2.circle(self.frame, (int(G[0]), int(G[1])), 10, (255, 255, 255), 5)
-            x = self.halfHeight - G[0]
-            y = G[1] - self.halfWidth
-            return x, y
+def drone_chage_state(forward,back,land,hover):
+    print(forward,back,land,hover)
+    
+    if land:
+        drone.land()
+    elif hover:
+        drone.hover()
+    else:
+        drone.move(forward=forward,back=back)
+    
 
-    #AR2つのそれぞれの座標が欲しい場合
-    def getARPoint(self):
-        if len(self.corners) >= 2:
-            square_points = np.reshape(np.array(self.corners), (4, -1))
-            G = np.mean(square_points, axis = 0)
-            cv2.circle(self.frame, (int(G[0]), int(G[1])), 10, (255, 255, 255), 5)
-            x0 = self.halfHeight - G[0]
-            y0 = G[1] - self.halfWidth
-            x1 = self.halfHeight - G[2]
-            y1 = G[3] - self.halfWidth
-            return (x0, y0, x1, y1)
+def main():
+    cnt=0
+    # マーカーサイズ
+    marker_length = 0.08 # [m]
 
-    def getDistanceAverage(self):
-        if len(self.corners) > 0:
-            self.rvec, self.tvec, _ = aruco.estimatePoseSingleMarkers(self.corners, arucoMarkerLength, self.cameraMatrix, self.distortionCoefficients)
-            G = np.mean(self.tvec, axis = 0)
-            return G[0][2]
+    camera_matrix = np.array( [[9.31357583e+03, 0.00000000e+00, 1.61931898e+03],
+                          [0.00000000e+00, 9.64867367e+03, 1.92100899e+03],
+                          [0.00000000e+00, 0.00000000e+00, 1.00000000e+00]] )
+    distortion_coeff = np.array( [[ 0.22229833, -6.34741982,  0.01145082,  0.01934784, -8.43093571]   ] )
 
-            #ARそれぞれの距離が欲しかったらこっち
-            #return self.tvec[0][0][2], self.tvec[1][0][2]
+    try:
+        #離陸
+        client.takeoff()
 
-    def getDegrees(self):
-        if len(self.corners) > 0:
-            self.rvec, self.tvec, _ = aruco.estimatePoseSingleMarkers(self.corners[0], arucoMarkerLength, self.cameraMatrix, self.distortionCoefficients)
-            self.frame = aruco.drawAxis(self.frame, self.cameraMatrix, self.distortionCoefficients, self.rvec, self.tvec, 0.1)
-            (roll_angle, pitch_angle, yaw_angle) =  self.rvec[0][0][0]*180/pi, self.rvec[0][0][1]*180/pi, self.rvec[0][0][2]*180/pi
-            if pitch_angle < 0:
-                roll_angle, pitch_angle, yaw_angle = -roll_angle, -pitch_angle, -yaw_angle
-            return (roll_angle, pitch_angle, yaw_angle)
+        forward, back, land, hover = 0,0,0,0
 
-    def getExistMarker(self):
-        return len(self.corners)
+        while True:
+            if not client.frame:
+                continue
+            corners, ids, rejectedImgPoints = aruco.detectMarkers(client.frame, dictionary, parameters=parameters)
+            # 可視化
+            aruco.drawDetectedMarkers(client.frame, corners, ids, (0,255,255))
 
-    def release(self):
-        self.cap.release()
-        
+            if len(corners) > 0:
+                # マーカーごとに処理
+                for i, corner in enumerate(corners):
+                    # rvec -> rotation vector, tvec -> translation vector
+                    rvec, tvec, _ = aruco.estimatePoseSingleMarkers(corner, marker_length, camera_matrix, distortion_coeff)
+
+                    # <<< rodoriguesからeuluerへの変換 >>>
+
+                    # 不要なaxisを除去
+                    tvec = np.squeeze(tvec)
+                    rvec = np.squeeze(rvec)
+                    # 回転ベクトルからrodoriguesへ変換
+                    rvec_matrix = cv2.Rodrigues(rvec)
+                    rvec_matrix = rvec_matrix[0] # rodoriguesから抜き出し
+                    # 並進ベクトルの転置
+                    transpose_tvec = tvec[np.newaxis, :].T
+                    # 合成
+                    proj_matrix = np.hstack((rvec_matrix, transpose_tvec))
+                    # オイラー角への変換
+                    euler_angle = cv2.decomposeProjectionMatrix(proj_matrix)[6] # [deg]
+
+                    print("x : " + str(tvec[0]))
+                    print("y : " + str(tvec[1]))
+                    print("z : " + str(tvec[2]))
+                    print("roll : " + str(euler_angle[0]))
+                    print("pitch: " + str(euler_angle[1]))
+                    print("yaw  : " + str(euler_angle[2]))
+
+                    # 可視化
+                    draw_pole_length = marker_length/2 # 現実での長さ[m]
+                    aruco.drawAxis(client.frame, camera_matrix, distortion_coeff, rvec, tvec, draw_pole_length)
+
+                    # <<< 処理の分岐 >>>
+                    #0.5m=8 1m=16 2m=32
+
+                    #2m以上離れたら着陸する
+                    if tvec[2] >= 32:
+                        print(着陸します)
+                    #    drone.land()
+                        land=True
+
+                    #0.5mより遠い and 2mより近ければ速度0.5で飛行する
+                    elif 8 < tvec[2] and tvec[2] < 32:
+                    #    drone.move(forward=0.5)
+                        forward=0.5
+
+                    #どれにもあてはまらなかったらホバリング
+                    else:
+#                       drone.hover()
+                        hover=True
+                    drone_chage_state(forward,back,land,hover)
+
+            #マーカが検出できなかったらホバリング
+            else:
+#               drone.hover()
+                hover=True
+
+            cv2.imwrite('all'+str(cnt)+'.png',client.frame)
+            cnt+=1
+
+            # Escキーで終了
+            key = cv2.waitKey(50)
+            if key == 27: # ESC
+                break
+
+    finally:
+        client.close()
+
 if __name__ == '__main__':
-
-    myCap = AR(0, 'mtx.npy', 'dist.npy')
-    while True:
-        myCap.findARMarker()
-        print(myCap.getDegrees())
-        myCap.show()
-        if cv2.waitKey(1) > 0:
-            myCap.release()
-            cv2.destroyAllWindows()
-            break
+    try:
+        main()
+    except KeyboardInterrupt:
+        pass
