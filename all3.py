@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*
 #検出・計算・動作の一連の流れ
-#all2(原本)のコピーをいじったもの，飛ばないようにしてある
 
 import cv2
 import numpy as np
@@ -15,6 +14,9 @@ aruco = cv2.aruco #arucoライブラリ
 # ドローンカメラ
 client = ARDrone()
 client.video_ready.wait()
+#client.emergency
+if client.state.emergency_mask is True:
+    client.emergency()
 
 dictionary = aruco.getPredefinedDictionary(aruco.DICT_4X4_50)
 parameters =  aruco.DetectorParameters_create()
@@ -23,34 +25,41 @@ parameters.cornerRefinementMethod = aruco.CORNER_REFINE_CONTOUR
 
 ####################################################################
 
-'''
+#ドローンの動作部分
 def drone_chage_state(forward,land,hover):
-    print(forward,back,land,hover)
-    
+    print('drone change state',forward,land,hover)
     if land:
-        drone.land()
+        client.land()
     elif hover:
-        drone.hover()
+        client.hover()
     else:
-        drone.move(forward=forward)
-'''
+        client.move(forward=forward)
 
+
+#処理の分岐 0.5m=8 1m=16 1.5m=24 2m=32
 def calc(tvec, euler):
-    print(tvec[2], euler[0])
+    print("z = " + str(tvec[2]))
+    forward, land, hover = 0, False, False
     if not tvec.any():
         return
-    print("---処理の分岐前---")
-    # 2m以上離れたら着陸する
-    if tvec[2] >= 20:
-        print("1 --> 着陸")
 
-    # 0.5mより遠い and 2mより近ければ速度0.5で飛行する
-    elif 8 < tvec[2] and tvec[2] < 20:
-        print("2 --> 直進")
+    # 1.5m以上離れたら着陸する
+    if tvec[2] >= 24:
+        print("1 --> 着陸")
+        land=True
+
+    # 0.5m < tvec < 1.5m のとき速度0.5で飛行する
+    elif 8 < tvec[2] and tvec[2] < 24:
+        print("2 --> 速度0.3で直進")
+        forward=0.3
 
     # どれにもあてはまらなかったらホバリング
     else:
         print("3 --> ホバリング")
+        hover=True
+
+    drone_chage_state(forward,land,hover)
+
 
 def main():
     print("---main最初---")
@@ -63,16 +72,21 @@ def main():
     distortion_coeff = np.array( [[ 0.22229833, -6.34741982,  0.01145082,  0.01934784, -8.43093571]] )
 
     try:
+
+        # 離陸
+        client.takeoff()
+
+        forward, land, hover = 0, False, False
+
         while True:
-#            if not client.frame:
-#                continue
             print("############################")
-            print("---detectMarkersの前---")
+            print('states',client.state.emergency_mask)
+#            print("---detectMarkersの前---")
             corners, ids, rejectedImgPoints = aruco.detectMarkers(client.frame, dictionary, parameters=parameters)
-            print("---detectMarkersの後---")
+#            print("---detectMarkersの後---")
             # 可視化
             aruco.drawDetectedMarkers(client.frame, corners, ids, (0,255,255))
-            print("---if文前---")
+#            print("---if文前---")
 
             if len(corners) > 0:
                 # マーカーごとに処理
@@ -105,27 +119,22 @@ def main():
                     # 可視化
                     draw_pole_length = marker_length/2 # 現実での長さ[m]
                     aruco.drawAxis(client.frame, camera_matrix, distortion_coeff, rvec, tvec, draw_pole_length)
-                    calc(tvec, euler_angle)
-                    # <<< 処理の分岐 >>>
-                    #0.5m=8 1m=16 2m=32
 
+                    calc(tvec, euler_angle)
 
             # マーカが検出できなかったらホバリング
             else:
-
                 print("4 --> 未検出・ホバリング")
-                print("---未検出の時のif文---")
-
+                hover=True
+                drone_chage_state(forward,land,hover)
 
     finally:
-        pass
-#        client.close()
+        client.close()
 
 if __name__ == '__main__':
     try:
         main()
     except KeyboardInterrupt:
-#        client.emergency()
         print("Ctrl+Cで停止しました")
     finally:
-        client.emergency()
+        client.land()
