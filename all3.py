@@ -14,9 +14,10 @@ aruco = cv2.aruco #arucoライブラリ
 # ドローンカメラ
 client = ARDrone()
 client.video_ready.wait()
+
 #client.emergency
-if client.state.emergency_mask is True:
-    client.emergency()
+#if client.state.emergency_mask is True:
+#    client.emergency()
 
 dictionary = aruco.getPredefinedDictionary(aruco.DICT_4X4_50)
 parameters =  aruco.DetectorParameters_create()
