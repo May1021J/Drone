@@ -133,23 +133,24 @@ def tracking():
                 print("4 --> 未検出・ホバリング")
                 hover=True
                 drone_chage_state(forward,land,hover)
+    except:
+        pass
 
 def main():
+    try:
+        while True:
+            # 受信
+            msg, address = s.recvfrom(8192)
+            print(f"message: {msg}\nfrom: {address}")
 
-    while True:
-        # 受信
-        msg, address = s.recvfrom(8192)
-        print(f"message: {msg}\nfrom: {address}")
-
-        if msg == "takeoff":    #離陸
-            client.takeoff()
-        elif msg == "tracking": #追尾
-            tracking()
-        elif msg == "land":     #着陸
-            client.land()
-        else:
-            pass
-
+            if msg == "takeoff":    #離陸
+                client.takeoff()
+            elif msg == "tracking": #追尾
+                tracking()
+            elif msg == "land":     #着陸
+                client.land()
+            else:
+                pass
     finally:
         s.close()
         client.close()
