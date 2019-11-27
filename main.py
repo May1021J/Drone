@@ -141,7 +141,7 @@ def main():
         while True:
             # 受信
             msg, address = s.recvfrom(8192)
-            print(f"message: {msg}\nfrom: {address}")
+            print("message: "+msg+"\nfrom: {address}")
 
             if msg == "takeoff":    #離陸
                 client.takeoff()
