@@ -5,6 +5,7 @@
 import cv2
 import numpy as np
 import sys
+from time import sleep
 from pyardrone import ARDrone
 import logging
 from socket import socket, AF_INET, SOCK_DGRAM
@@ -137,11 +138,15 @@ def tracking():
         pass
 
 def main():
+
+    print("drone")
+    sleep(60)
+
     try:
         while True:
             # 受信
             msg, address = s.recvfrom(8192)
-            print("message: "+msg+"\nfrom: {address}")
+            print("message: "+msg+"\nfrom: "+address)
 
             if msg == "takeoff":    #離陸
                 client.takeoff()
