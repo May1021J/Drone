@@ -2,9 +2,12 @@
 # -*- coding: utf-8 -*
 #検出・計算・動作の一連の流れ
 
+import os
+import sys
+sys.path.append('.')
+sys.path.append('/usr/local/lib/python3.4/site-packages')
 import cv2
 import numpy as np
-import sys
 from time import sleep
 from pyardrone import ARDrone
 import logging
