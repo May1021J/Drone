@@ -149,6 +149,7 @@ def main():
         while True:
             # 受信
             msg, address = s.recvfrom(8192)
+            msg = msg.decode('utf-8')
             print("message: "+msg+"\nfrom: "+address)
 
             if msg == "takeoff":    #離陸
