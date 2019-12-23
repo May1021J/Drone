@@ -13,8 +13,12 @@ from pyardrone import ARDrone
 import logging
 from socket import socket, AF_INET, SOCK_DGRAM
 
-HOST = ''   
+HOST = ''       #送信元
 PORT = 5000
+ADDRESS = ''    #送信先
+
+print("drone")
+sleep(60)
 
 # ソケットを用意
 s = socket(AF_INET, SOCK_DGRAM)
@@ -57,15 +61,15 @@ def calc(tvec, euler):
     if not tvec.any():
         return
 
-    # 1.5m以上離れたら着陸する
-    if tvec[2] >= 24:
+    # 2m以上離れたら着陸する
+    if tvec[2] >= 32:
         print("1 --> 着陸")
         land=True
 
-    # 0.5m < tvec < 1.5m のとき速度0.5で飛行する
+    # 0.5m < tvec < 2m のとき速度0.5で飛行する
     elif 8 < tvec[2] and tvec[2] < 24:
-        print("2 --> 速度0.3で直進")
-        forward=0.3
+        print("2 --> 速度0.5で直進")
+        forward=0.5
 
     # どれにもあてはまらなかったらホバリング
     else:
@@ -134,23 +138,20 @@ def tracking():
 
             # マーカが検出できなかったらホバリング
             else:
-                print("4 --> 未検出・ホバリング")
-                hover=True
-                drone_chage_state(forward,land,hover)
+                print("4 --> 未検出")
+                #hover=True
+                #drone_chage_state(forward,land,hover)
     except:
         pass
 
 def main():
-
-    print("drone")
-    sleep(60)
-
     try:
         while True:
             # 受信
             msg, address = s.recvfrom(8192)
             msg = msg.decode('utf-8')
             print("message: "+msg+"\nfrom: "+address)
+            s.sendto(msg.encode(), (ADDRESS, PORT))
 
             if msg == "takeoff":    #離陸
                 client.takeoff()
